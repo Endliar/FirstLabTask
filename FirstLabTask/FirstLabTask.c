@@ -45,9 +45,9 @@ int main()
     {
         addData(file);
         fflush(file);
-        fclose(file); // Закрыть файл
+        fclose(file);
 
-        file = fopen("Spravka.dat", "r"); // Снова открыть для чтения
+        file = fopen("Spravka.dat", "r");
         if (file == NULL) {
             printf("Не удалось переоткрыть файл\n");
             return 1;
@@ -56,12 +56,13 @@ int main()
 
     rewind(file);
 
-    if (file != NULL) {
+    do
+    {
         bool found = false;
         int searchNumber;
         printf("Enter the route number: ");
         scanf("%d", &searchNumber);
-        
+
         Route r;
         while (fgets(r.start, sizeof(r.start), file) != NULL &&
             fgets(r.end, sizeof(r.end), file) != NULL &&
@@ -82,9 +83,21 @@ int main()
             printf("Route number %d was not found. \n", searchNumber);
         }
         fclose(file);
-    }
-    else {
-        printf("Не удалось создать файл\n");
-    }
+
+        file = fopen("Spravka.dat", "a+");
+        if (file == NULL) {
+            printf("Unable to open file\n");
+            return 1;
+        }
+
+        printf("Do you want to search again? (y/n): ");
+        char againAnswer;
+        scanf(" %c", &againAnswer);
+        if (againAnswer != 'y' && againAnswer != 'Y') {
+            break;
+        }
+    } while (1);
+
+
     return 0;
 }
