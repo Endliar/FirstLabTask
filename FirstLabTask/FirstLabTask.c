@@ -13,91 +13,68 @@ void addData(FILE* file) {
     Route r;
 
     printf("Enter the starting point: ");
-    fgets(r.start, sizeof(r.start), stdin);
-    r.start[strcspn(r.start, "\n")] = '\0';
+    scanf("%49s", r.start);
 
     printf("Enter the endpoint: ");
-    fgets(r.end, sizeof(r.end), stdin);
-    r.end[strcspn(r.end, "\n")] = '\0';
+    scanf("%49s", r.end);
 
     printf("Enter the route number: ");
-    scanf("%d%*с", &r.number);
+    scanf("%d", &r.number);
 
-    fprintf(file, "%s\n%s\n%d\n", r.start, r.end, r.number);
+    fwrite(&r, sizeof(Route), 1, file);
 }
 
-bool askToAddData() {
-    char answer;
-    printf("Do you want to add data? (y/n): ");
-    scanf("%c%*c", &answer);
-    return answer == 'y' || answer == 'Y';
+void findRouteByNumber(FILE* file, int routeNumber)
+{
+    Route r;
+
+    rewind(file);
+
+    while (fread(&r, sizeof(Route), 1, file) == 1)
+    {
+        if (r.number == routeNumber) {
+            printf("Route found: Start: %s, End: %s, Number: %d", r.start, r.end, r.number);
+            return;
+        }
+    }
+
+    printf("Route with number %d not found.", routeNumber);
 }
 
 int main()
 {
-    FILE* file = fopen("Spravka.dat", "a+");
+    FILE* file = fopen("routes.dat", "ab+"); // "ab+" позволяет и добавлять, и читать данные
+
     if (file == NULL) {
-        printf("Unable to open file\n");
+        perror("Error opening file");
         return 1;
     }
 
-    if (askToAddData())
-    {
-        addData(file);
-        fflush(file);
-        fclose(file);
-
-        file = fopen("Spravka.dat", "r");
-        if (file == NULL) {
-            printf("Не удалось переоткрыть файл\n");
-            return 1;
+    int addMore = 0;
+    do {
+        printf("Would you like to add a route? (1 for yes, 0 for no): ");
+        scanf("%d", &addMore);
+        while (getchar() != '\n');
+        if (addMore) {
+            addData(file);
+            fflush(file); 
         }
-    }
+
+    } while (addMore != 0);
 
     rewind(file);
 
-    do
-    {
-        bool found = false;
-        int searchNumber;
-        printf("Enter the route number: ");
-        scanf("%d", &searchNumber);
-
-        Route r;
-        while (fgets(r.start, sizeof(r.start), file) != NULL &&
-            fgets(r.end, sizeof(r.end), file) != NULL &&
-            fscanf(file, "%d", &r.number) != EOF)
-        {
-            if (r.number == searchNumber) {
-                found = true;
-                printf("Route data:\n");
-                printf("Starting point: %s\n", r.start);
-                printf("Endpoint: %s\n", r.end);
-                printf("Route number: %d\n", r.number);
-                printf("\n");
-                break;
-            }
+    int routeNumber;
+    do {
+        printf("Enter route number to find(or enter '0' to finish) : "); 
+        scanf("%d", &routeNumber);
+        while (getchar() != '\n');
+        if (routeNumber != 0) {
+            findRouteByNumber(file, routeNumber);
         }
-        if (!found)
-        {
-            printf("Route number %d was not found. \n", searchNumber);
-        }
-        fclose(file);
+    } while (routeNumber != 0);
 
-        file = fopen("Spravka.dat", "a+");
-        if (file == NULL) {
-            printf("Unable to open file\n");
-            return 1;
-        }
-
-        printf("Do you want to search again? (y/n): ");
-        char againAnswer;
-        scanf(" %c", &againAnswer);
-        if (againAnswer != 'y' && againAnswer != 'Y') {
-            break;
-        }
-    } while (1);
-
+    fclose(file);
 
     return 0;
 }
